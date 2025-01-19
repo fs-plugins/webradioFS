@@ -1,3 +1,4 @@
+from . import pyvers1, _
 from Screens.Screen import Screen
 from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Screens.InputBox import InputBox
@@ -28,14 +29,22 @@ from enigma import eConsoleAppContainer
 import os
 from os import listdir, path, chmod, remove, popen
 from time import *
-from . import _
-import urllib, urllib2, socket
+import urllib, socket
 import ssl
-from urllib import quote
-from urllib import urlencode
-from urllib2 import urlopen, Request, URLError
-import httplib, uuid, random
-from urlparse import urlparse
+if pyvers1==3:
+    from urllib.parse import quote,quote_plus,urlparse,urlencode
+    from urllib.request import urlopen, Request
+    import http.client as httplib
+    from urllib.error import HTTPError, URLError
+else:
+    from urllib import quote,quote_plus
+    from urlparse import urlparse
+    from urllib import urlencode
+
+    from urllib2 import urlopen, Request, URLError
+    import httplib
+import uuid, random
+#from urlparse import urlparse
 import threading
 from sqlite3 import dbapi2 as sqlite
 try:
@@ -50,7 +59,7 @@ except:
    mutagen=None
 try:
     import tarfile
-except ImportError, e:
+except ImportError as e:
     tarfile = None
 
 set_file='/etc/ConfFS/webradioFS_sets.db'
@@ -62,7 +71,7 @@ class read_settings1:
         if "prog" in sets_liste:
             self.sets_prog={"version":0,"wbrmeld":"","hauptmenu": False,"DPKG":False,"exttmenu":True}
         if "grund" in sets_liste:    
-            self.sets_grund={"picsearch":"var1","favpath":"/etc/ConfFS/","exitfrage":False,"nickname":"nn", "stream_sort":1,"wbrbackuppath":"/media/hdd/","startstream1":0,"skin_ignore":False,"zs":False}
+            self.sets_grund={"picsearch":"var1","favpath":"/etc/ConfFS/","exitfrage":False,"stream_sort":1,"wbrbackuppath":"/media/hdd/","startstream1":0,"skin_ignore":False,"zs":False}
         if "opt" in sets_liste:
             self.sets_opt={"rec":False,"views":False,"expert":0,"scr":False,"lcr":False,"audiofiles":False,"tasten":False,"display":False,"sispmctl":False}
         if "rec" in sets_liste:
@@ -92,12 +101,12 @@ class read_settings1:
           try:
             for key,var in vars(self)["sets_"+setx].items():
                 cursor.execute('SELECT wert1 FROM settings WHERE nam1 = "%s" AND group1 = "%s";' % (key,setx))
-            row = cursor.fetchone()
-            if row is None:
+                row = cursor.fetchone()
+                if row is None:
                     uni=str(setx)+str(key)
                     cursor.execute("INSERT OR IGNORE INTO settings (group1,nam1,wert1,wert2) VALUES(?,?,?,?);",  (setx,key,str(var),uni))
                     connection.commit()
-            else:
+                else:
                     if len(str(row[0])):
                         try: 
                             vars(self)["sets_"+setx][key]=int(row[0]) 
@@ -132,9 +141,7 @@ class read_einzeln:
                         try: 
                             return_liste.append(int(row[0])) 
                         except:
-                            if "nickname" in einz and row[0]==False:
-                                return_liste.append("nn")
-                            elif "expert" in einz:
+                            if "expert" in einz:
                                 if row[0].strip() in ("True","true"):
                                     return_liste.append(1)
                                 elif row[0].strip() in ("False","false","None","none"):
@@ -145,8 +152,6 @@ class read_einzeln:
                                 return_liste.append(True)
                             else:
                                 return_liste.append(row[0].strip())
-                    elif "nickname" in einz:
-                                return_liste.append("nn")
             cursor.close()
             connection.close()
             return  return_liste
@@ -221,10 +226,10 @@ class read_plan:
                 connection.commit()
 #////////// planer ende
 
-fp=read_einzeln().reading((("grund","favpath"),("grund","nickname"),("prog","DPKG")))
+fp=read_einzeln().reading((("grund","favpath"),("prog","DPKG")))
 
-nickname= fp[1]
-DPKG = fp[2]
+
+DPKG = fp[1]
 if fp[0] and path.exists(fp[0]):
     myfav_path = fp[0]
 else:
@@ -267,7 +272,7 @@ class StreamPlayer:
 class Streamlist:
 
     def streams(session, stream = None, typ = None,timeout1=10,etest=None):
-        from webradioFS import fontlist
+        from .webradioFS import fontlist
         streamliste = []
         socket.setdefaulttimeout(timeout1)
         typ_check = 'mp3'
@@ -281,11 +286,12 @@ class Streamlist:
         if stream:
             read_timer = eTimer()
             try:
+            #if 1==1:
                 linex = None
                 stream1 = stream
-                request = urllib2.Request(stream)
+                request = Request(stream)
                 request.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686; it-IT; rv:1.9.0.2')
-                path = urllib2.urlopen(request, None, 5)
+                path = urlopen(request, None, 5)
                 if fontlist[4]:
                     read_timer_conn = read_timer.timeout.connect(path.close)
                 else:
@@ -294,7 +300,18 @@ class Streamlist:
                 p2 = path.geturl()
                 if p2:
                     stream = p2
-                i1 = path.info().dict
+                #f7=open("/tmp/001","a")
+                #p1.json()
+                #out = path.info().json()
+                out = dict(path.info())
+                #f7.write(str(out)+"\n")
+                #f7.write(str(path.info())+"\n")
+                #f7.close()
+                if pyvers1==3:
+                    i1 = dict(path.info())
+                else:
+                    i1 = path.info().dict
+                
                 if 'content-type' in i1 and etest==None:
                     typ7 = i1['content-type']
                     if 'text' in typ7:
@@ -310,13 +327,16 @@ class Streamlist:
                         typ = 'wma'
                 read_timer.startLongTimer(timeout1)
                 linex2 = path.read(1000)
+                #f7.write(str(linex2)+"\n")
+                #f7.write(str(typ)+"\n")
                 if etest:
                     f=open("/tmp/webradioFS_debug.log","a")
                     f.write("streamtest ==> "+str(stream)+"\n")
                     f.write(str(i1)+"\n")
                     f.close()
                 if len(linex2):
-                    linex = linex2.split('\n')
+                    linex = linex2.splitlines()#('\n')
+                    #linex=None
                 if linex and (typ == 'pls' or typ == 'm3u' or stream.endswith('pls') or stream.endswith('m3u')):
                     for x in linex:
                         str2=None
@@ -340,25 +360,26 @@ class Streamlist:
                 if len(streamliste) == 1:
                     streamliste = [streamliste[0], streamliste[0]]
                 return (streamliste, typ1, stream)
-            except urllib2.HTTPError as err:
-                return (None, str(err))
-            except urllib2.URLError as err:
+            except HTTPError as err:
+                return (None, "st_l_a, "+str(err))
+            except URLError as err:
                 error = 'Error: '
                 if hasattr(err, 'code'):
                     error += str(err.code)
                 if hasattr(err, 'reason'):
                     error += str(err.reason)
-                return (None, error)
+                return (None, "st_l_b, "+error)
             except socket.timeout:
-                return (None, 'timeout')
+                return (None, "st_l_c, "+'timeout')
             except Exception as e:
-                return (None, str(e))
+                return (None, "st_l_d, "+str(e))
+            #f7.write(str(streamliste)+"\n")
             return (None, 'unknown error')
 
 
 class wbrfs_message(Screen):
     def __init__(self, session):
-        from webradioFS import fontlist
+        from .webradioFS import fontlist
         self.Faktor=1
         if fontlist[6]>1600:self.Faktor=1.5
         self.fonts=fontlist
@@ -526,8 +547,8 @@ class filemenu:
         self.file = None
         self.msg=None
     def start(self,num = None):
-        from webradioFS import fontlist
-        from webradioFS import right_site
+        from .webradioFS import fontlist
+        from .webradioFS import right_site
         right_site.hide()
         if num:
             self.num = num
@@ -649,7 +670,7 @@ class filemenu:
         self.session.openWithCallback(self.r_site,MessageBox, res, type=MessageBox.TYPE_ERROR, timeout=20)
 
     def r_site(self,res=None):
-            from webradioFS import right_site
+            from .webradioFS import right_site
             right_site.show()
 
 class load_rf:
@@ -664,7 +685,7 @@ class load_rf:
 
     def run(self):
         self.install=None
-        from webradioFS import fontlist
+        from .webradioFS import fontlist
         self.container=eConsoleAppContainer()
         if fontlist[4]:
             self.dataAvail_conn = self.container.dataAvail.connect(self.read_data)
@@ -701,7 +722,7 @@ class load_rf:
        pass
 
     def f(self):
-        from webradioFS import right_site
+        from .webradioFS import right_site
         self.r_s= right_site
         self.r_s.hide()
         if fileExists('/usr/bin/streamripper') and os.stat('/usr/bin/streamripper').st_size:
@@ -742,7 +763,7 @@ class wbrfs_filelist(Screen):
 
 class webradioFSdisplay13(Screen):
     def __init__(self, session, parent):
-        from webradioFS import fontlist
+        from .webradioFS import fontlist
         skincontent = ''
         self.scroll_line = 'Zeile2'
         self.zeit = None
@@ -1026,7 +1047,7 @@ class webradioFSdisplay13(Screen):
 
 class webradioFSsetDisplay(Screen, ConfigListScreen):
     def __init__(self, session,fonts=None):
-        from webradioFS import fontlist
+        from .webradioFS import fontlist
         tmpskin = open(fontlist[5]+"wbrFS_setup.xml")
         self.skin = tmpskin.read()
         tmpskin.close()
@@ -1386,7 +1407,7 @@ class tag_read:
 
 class fav_import:
     def imp2(self, t = None, version = None, php_num=None,num=None):
-        from webradioFS import fontlist
+        from .webradioFS import fontlist
         startsets=read_settings1().reading(("prog",""))#[0]
         sets_prog=startsets[0]
         z = None

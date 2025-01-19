@@ -1,4 +1,3 @@
-# Sprache
 from . import _
 
 from Screens.Screen import Screen
@@ -13,18 +12,17 @@ from Components.ConfigList import ConfigListScreen, ConfigList
 from Components.config import getConfigListEntry, ConfigText, NoSave
 from GlobalActions import globalActionMap
 from Tools.LoadPixmap import LoadPixmap
-#from Tools.Directories import SCOPE_CURRENT_SKIN, resolveFilename
 from enigma import getDesktop
 from time import *
 import time
 import datetime
-import os     
-        
-plugin_path = "/usr/lib/enigma2/python/Plugins/Extensions/webradioFS"        
-        
+import os
+
+plugin_path = "/usr/lib/enigma2/python/Plugins/Extensions/webradioFS"
+
 class wbrfs_col_13(Screen, HelpableScreen):
     def __init__(self, session, text_col,back_col,r_inf):
-                from webradioFS import fontlist
+                from .webradioFS import fontlist
                 tmpskin = open(fontlist[5]+"wbrFS_screensaver.xml")
                 self.skin = tmpskin.read()
                 tmpskin.close() 
@@ -75,30 +73,30 @@ class wbrfs_col_13(Screen, HelpableScreen):
                 uhrzeit = strftime("%H:%M",localtime())
                 timewidget = "\n"+self.TagesZahl +", " + strftime("%d.%m.%Y",localtime()) + "   " + uhrzeit
                 text01="webradioFS "+timewidget
-		self["display_station"] = Label(_("Show live what you set"))
+                self["display_station"] = Label(_("Show live what you set"))
                 self["display_nplaying"] = Label(_("Change color with: left,right, up,down")+",Help")
-		
-		self["display_time"] = Label(text01)
-		self["background1"] = Label("")
-		self["cover"] = Pixmap()
-		self.dummyTxt=""
-		self["cover2"] = Pixmap()
-		#self["cover"].hide()
-		self["cover2"].hide()
-		#self["key_green"] = Label(_("Save"))
-		#self["key_red"] = Label(_("Cancel"))
+
+                self["display_time"] = Label(text01)
+                self["background1"] = Label("")
+                self["cover"] = Pixmap()
+                self.dummyTxt=""
+                self["cover2"] = Pixmap()
+                #self["cover"].hide()
+                self["cover2"].hide()
+                #self["key_green"] = Label(_("Save"))
+                #self["key_red"] = Label(_("Cancel"))
                 HelpableScreen.__init__(self)
                 self["actions"] = HelpableActionMap(self, "wbrfsKeyActions",
-		{
+                        {
                         "green": (self.save,_("Save")),
-			"red": (self.exit,_("Cancel")),
-			"cancel": (self.exit,_("Cancel")),
-			"ok": (self.save, _("Save")),
-			"down": (self.text_color_down,_("preview text color")),
-			"up": (self.text_color_up,_("next text color")),
-			"right": (self.b_color_right,_("next back color")),
-			"left": (self.b_color_left,_("preview back color")),
-		}, -2)
+                        "red": (self.exit,_("Cancel")),
+                        "cancel": (self.exit,_("Cancel")),
+                        "ok": (self.save, _("Save")),
+                        "down": (self.text_color_down,_("preview text color")),
+                        "up": (self.text_color_up,_("next text color")),
+                        "right": (self.b_color_right,_("next back color")),
+                        "left": (self.b_color_left,_("preview back color")),
+                        }, -2)
                 self.onLayoutFinish.append(self.start)
 
     def start(self):
@@ -109,6 +107,7 @@ class wbrfs_col_13(Screen, HelpableScreen):
                 self["display_station"].instance.setTransparent(0)
                 self["display_time"].instance.setTransparent(0)
                 self.change_textfarbe()
+
     def col_set_back(self,bg,txt):
             if bg and txt:    
                 self.color_list.append(bg)
@@ -116,19 +115,20 @@ class wbrfs_col_13(Screen, HelpableScreen):
                 self.text_color_index = len(self.color_list)-1
                 self.back_color_index = len(self.color_list)-2
                 self.change_textfarbe()
+
     def b_color_right(self):
          if self.back_color_index < len(self.color_list)-1:
            self.back_color_index +=1
          else:  
            self.back_color_index= 0
          self.change_textfarbe()
+
     def b_color_left(self):
          if self.back_color_index > 0:
            self.back_color_index -=1
          else:  
            self.back_color_index= len(self.color_list)-1
-         self.change_textfarbe()       
-
+         self.change_textfarbe()
 
     def text_color_up(self):
          if self.text_color_index < (len(self.color_list)-1):
@@ -136,12 +136,14 @@ class wbrfs_col_13(Screen, HelpableScreen):
          else:  
            self.text_color_index= 0
          self.change_textfarbe()  
+
     def text_color_down(self):
          if self.text_color_index > 0:
            self.text_color_index-=1
          else:  
            self.text_color_index= len(self.color_list)-1
          self.change_textfarbe()
+
     def change_textfarbe(self):
             if self.dummyTxt==" ":
                self.dummyTxt=""
@@ -152,16 +154,13 @@ class wbrfs_col_13(Screen, HelpableScreen):
             try:
                 self["background1"].instance.setBackgroundColor(parseColor(bg_farbe))
                 self["background1"].instance.setForegroundColor(parseColor(bg_farbe))
-
                 self["display_nplaying"].instance.setBackgroundColor(parseColor(bg_farbe))
                 self["display_station"].instance.setBackgroundColor(parseColor(bg_farbe))
                 self["display_time"].instance.setBackgroundColor(parseColor(bg_farbe))
-
                 self["display_nplaying"].instance.setForegroundColor(parseColor(tx_farbe))
                 self["display_station"].instance.setForegroundColor(parseColor(tx_farbe))
                 self["display_time"].instance.setForegroundColor(parseColor(tx_farbe))
                 self.setTime()
-
             except:
                 self.session.open(MessageBox, _("failed, not a regular color-string"), type = MessageBox.TYPE_INFO)
 
@@ -169,17 +168,17 @@ class wbrfs_col_13(Screen, HelpableScreen):
                 uhrzeit = strftime("%H:%M",localtime())
                 timewidget = "\n"+self.TagesZahl +", " + strftime("%d.%m.%Y",localtime()) + "   " + uhrzeit
                 self["display_time"].setText("webradioFS "+timewidget+self.dummyTxt)
-		self["display_station"].setText(_("Show live what you set")+self.dummyTxt)
+                self["display_station"].setText(_("Show live what you set")+self.dummyTxt)
                 self["display_nplaying"].setText(_("Change color with: left,right, up,down")+",Help"+self.dummyTxt)
+
     def save(self):
-		col1=self.color_list[self.text_color_index]#.replace("#","")
-		col2=self.color_list[self.back_color_index]#.replace("#","")
-                self.close(col1,col2)
+        col1=self.color_list[self.text_color_index]#.replace("#","")
+        col2=self.color_list[self.back_color_index]#.replace("#","")
+        self.close(col1,col2)
 
     def exit(self):
             self.close(None)
             
     def cancel(self):
-		self.close(None)
+        self.close(None)
 
-	

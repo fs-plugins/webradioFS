@@ -20,7 +20,7 @@ from Screens.VirtualKeyBoard import VirtualKeyBoard
 
 #from skin import parseColor
 
-from wbrfs_funct import webradioFSdisplay13,read_einzeln
+from .wbrfs_funct import webradioFSdisplay13,read_einzeln
 #skin_ignore=read_einzeln().reading((("grund","skin_ignore"),))[0]
 
 try:
@@ -38,74 +38,71 @@ pngok = LoadPixmap(picpath+"pic_ok.png")
         
 class menu_13(Screen):
     def __init__(self, session,sendlist=[],titel=_("webradioFS-Menu"),back=None,display=None,l4ls=None):
-		from webradioFS import fontlist
-                tmpskin = open(fontlist[5]+"webradioFS.xml")
-                self.sendlist=sendlist
-                self.skin = tmpskin.read()
-                tmpskin.close()
-		Screen.__init__(self, session)
-                if fontlist[9]:
+        from .webradioFS import fontlist
+        tmpskin = open(fontlist[5]+"webradioFS.xml")
+        self.sendlist=sendlist
+        self.skin = tmpskin.read()
+        tmpskin.close()
+        Screen.__init__(self, session)
+        if fontlist[9]:
                      self.skinName = "WebradioFSScreen_e"
-                else:
+        else:
                      self.skin=self.skin.replace('backgroundColor="#000000"','')
                      self.skin=self.skin.replace('foregroundColor="#ffffff"','')
-		     self.skinName = "WebradioFSScreen_16"
-                self.back=back
-                self.display=display
-                self.l4ls=None
-                try:
+        self.skinName = "WebradioFSScreen_16"
+        self.back=back
+        self.display=display
+        self.l4ls=None
+        try:
                    if l4ls[0]=="True":
                       self.l4ls=l4ls
-                except:
+        except:
                     pass
 
-                self["streamlist"] = List([])
-                self["dummy"] = Pixmap()
-                self["playtext"] = StaticText("") #Label("")
-		#self["rec_txt"] = Label()
-		#self["rec_txt2"] = Label()
-		self["rec_text_new"]=List([(titel,"")])
-                self["rec_text_new"].style = "titel"
-                #self["rec_text_new"].disable_callbacks = False
-                
-		
-                self["green_pic"] = Pixmap()
-		self["rec_pic"] = Pixmap() 
-		self["buttons_abdeck"] = Label("")
-		self["key_red2"] = Label("") 
-		self["key_green2"] = Label("")
-		self["key_red"] = Label("") 
-		self["key_green"] = Label("") 
-		self["key_yellow"] = Label("") 
-		self["key_blue"] = Label("") 
-		self["help"] = ScrollLabel("")
+        self["streamlist"] = List([])
+        self["dummy"] = Pixmap()
+        self["playtext"] = StaticText("") #Label("")
+        #self["rec_txt"] = Label()
+        #self["rec_txt2"] = Label()
+        self["rec_text_new"]=List([(titel,"")])
+        self["rec_text_new"].style = "titel"
+        #self["rec_text_new"].disable_callbacks = False
 
-		hide_list=(self["key_red2"],self["key_green2"],self["rec_pic"],self["help"])
-		for x in hide_list:
-		    x.hide()
-		self["uactions"] = ActionMap(["DirectionActions"],
-            	{
-                    "up" : self.upPressed,
-             	    "down" : self.downPressed,
-        	})		
-		
-		self["actions"] = ActionMap(["wbrfsKeyActions"],
-		{
-			"ok": self.run,
-			"back": self.exit,
-			"menu": self.exit2,
-			"cancel": self.exit,
+        self["green_pic"] = Pixmap()
+        self["rec_pic"] = Pixmap() 
+        self["buttons_abdeck"] = Label("")
+        self["key_red2"] = Label("") 
+        self["key_green2"] = Label("")
+        self["key_red"] = Label("") 
+        self["key_green"] = Label("") 
+        self["key_yellow"] = Label("") 
+        self["key_blue"] = Label("") 
+        self["help"] = ScrollLabel("")
 
-		})
-        	self["GlobalwbrfsKeyActions"] = ActionMap(["GlobalwbrfsKeyActions"],
-            	{
+        hide_list=(self["key_red2"],self["key_green2"],self["rec_pic"],self["help"])
+        for x in hide_list:
+            x.hide()
+        self["uactions"] = ActionMap(["DirectionActions"],
+            {
                     "up" : self.upPressed,
-             	    "down" : self.downPressed,
-        	})
-		self.onChangedEntry = []
-		self["streamlist"].onSelectionChanged.append(self.selectionChanged)
-		self.onLayoutFinish.append(self.updateList)
-		self.setTitle(titel)
+                    "down" : self.downPressed,
+            })
+        self["actions"] = ActionMap(["wbrfsKeyActions"],
+        {
+        "ok": self.run,
+        "back": self.exit,
+        "menu": self.exit2,
+        "cancel": self.exit,
+        })
+        self["GlobalwbrfsKeyActions"] = ActionMap(["GlobalwbrfsKeyActions"],
+        {
+                    "up" : self.upPressed,
+                    "down" : self.downPressed,
+        })
+        self.onChangedEntry = []
+        self["streamlist"].onSelectionChanged.append(self.selectionChanged)
+        self.onLayoutFinish.append(self.updateList)
+        self.setTitle(titel)
 
     def downPressed(self):
         self["streamlist"].selectNext()
@@ -136,17 +133,17 @@ class menu_13(Screen):
           self.close(None,None)
 
     def createSummary(self):
-	if self.display:
+        if self.display:
             return webradioFSdisplay13
 
     def selectionChanged(self):
-                sel = self["streamlist"].getCurrent()[0][0] 
-		text1=_("webradioFS-Menu")
-                text2= sel 
-		self["playtext"].setText(str(self["streamlist"].getCurrent()[0][2]))
-		
-        	if self.l4ls and len(self.sendlist):
-         	    try:   
+        try:
+            sel = self["streamlist"].getCurrent()[0][0] 
+            text1=_("webradioFS-Menu")
+            text2= sel 
+            self["playtext"].setText(str(self["streamlist"].getCurrent()[0][2]))
+            if self.l4ls and len(self.sendlist):
+            #try:
                        txt=""
                        menuliste=[]
                        for x in self.sendlist:
@@ -158,13 +155,14 @@ class menu_13(Screen):
                        MyElements.add( "wbrFS.07.box7",{"Typ":"box","PosX":0,"PosY":0,"Width":5000, "Height":600,"Color":"black" , "Screen":str(self.l4ls[3]),"Lcd":self.l4ls[1],"Mode":"OnMedia"} )
                        MyElements.add( "wbrFS.08.txt8",{"Typ":"txt","Align":"0","Width":500,"Pos":0,"Text":txt,"Size":str(self.l4ls[27]),"Color":str(self.l4ls[29]),"Screen":str(self.l4ls[3]),"Lines":20,"Lcd":self.l4ls[1],"Mode":"OnMedia"} )
                        MyElements.setScreen(self.l4ls[3],self.l4ls[1],True)
-         	    except:
-         	        pass
-		#f.close()
-                if self.display:
-                    for cb in self.onChangedEntry:
-			cb(text1,text2)
 
+        #f.close()
+            if self.display:
+                for cb in self.onChangedEntry:
+                    cb(text1,text2)
+        except:
+                 pass
+                 
 class groups_13(Screen):
     def __init__(self, session,fav,titel=_("Group-Menu")):
                 from webradioFS import fontlist
@@ -172,54 +170,54 @@ class groups_13(Screen):
                 self.skin = tmpskin.read()
                 tmpskin.close()                
                 self.fav=fav
-		self.g_list=[]
-		Screen.__init__(self, session)
+                self.g_list=[]
+                Screen.__init__(self, session)
                 if fontlist[9]:
                     self.skinName = "WebradioFSScreen_e"
                 else:
                      self.skin=self.skin.replace('backgroundColor="#000000"','')
                      self.skin=self.skin.replace('foregroundColor="#ffffff"','')
-		     self.skinName = "WebradioFSScreen_16"
+                     self.skinName = "WebradioFSScreen_16"
                 self["streamlist"] = List([])
                 self["dummy"] = Pixmap()
                 self["playtext"] = StaticText("")
-		self["rec_text_new"]=List([(_("Group-Menu"),"")])
+                self["rec_text_new"]=List([(_("Group-Menu"),"")])
                 self["rec_text_new"].style = "titel"
                 self["green_pic"] = Pixmap()
-		self["rec_pic"] = Pixmap() 
-		self["buttons_abdeck"] = Label("")
-		self["key_red2"] = Label("") 
-		self["key_green2"] = Label("")
-		self["playline2"] = ServicePositionGauge(self.session.nav)
+                self["rec_pic"] = Pixmap() 
+                self["buttons_abdeck"] = Label("")
+                self["key_red2"] = Label("") 
+                self["key_green2"] = Label("")
+                self["playline2"] = ServicePositionGauge(self.session.nav)
 
-		self["key_red"] = Label(_("Delete")) 
-		self["key_green"] = Label(_("New")) 
-		self["key_yellow"] = Label(_("Rename")) 
-		self["key_blue"] = Label("") 
-		self["help"] = ScrollLabel("")
-		self.connection = sqlite.connect(self.fav)
+                self["key_red"] = Label(_("Delete")) 
+                self["key_green"] = Label(_("New")) 
+                self["key_yellow"] = Label(_("Rename")) 
+                self["key_blue"] = Label("") 
+                self["help"] = ScrollLabel("")
+                self.connection = sqlite.connect(self.fav)
                 self.connection.text_factory = str
                 self.cursor = self.connection.cursor()
-		hide_list=(self["key_red2"],self["key_green2"],self["rec_pic"],self["help"],self["playline2"],self["buttons_abdeck"])
-		for x in hide_list:
-		    x.hide()
+                hide_list=(self["key_red2"],self["key_green2"],self["rec_pic"],self["help"],self["playline2"],self["buttons_abdeck"])
+                for x in hide_list:
+                    x.hide()
 
-		self["actions"] = ActionMap(["wbrfsKeyActions", "ColorActions"],
-		{
-			"ok": self.run,
-			"cancel": self.exit,
+                self["actions"] = ActionMap(["wbrfsKeyActions", "ColorActions"],
+                    {
+                        "ok": self.run,
+                        "cancel": self.exit,
                         "red": self.gdel,
                         "green": self.add,
                         "yellow": self.rename,
-		})
-		#self["streamlist"].onSelectionChanged.append(self.selectionChanged)
-		self.onLayoutFinish.append(self.updateList)
-		self.setTitle(titel)
+                    })
+                #self["streamlist"].onSelectionChanged.append(self.selectionChanged)
+                self.onLayoutFinish.append(self.updateList)
+                self.setTitle(titel)
 
 
     def updateList(self):
-		self.g_list=[]
-		#self.g_list2=[]
+                self.g_list=[]
+                #self.g_list2=[]
                 self.cursor.execute("select * from groups;")
                 for row in self.cursor:
                     l= (row[0],row[1])      

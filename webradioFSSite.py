@@ -21,14 +21,13 @@ from webradioFS import WebradioFSScreen_15
 from wbrfs_funct import read_einzeln
 import webradioFS
 
-fp=read_einzeln().reading((("audiofiles","audiopath"),("audiofiles","save_random"),("grund","nickname"),("opt","audiofiles"),("prog","DPKG")))
+fp=read_einzeln().reading((("audiofiles","audiopath"),("audiofiles","save_random"),("opt","audiofiles"),("prog","DPKG")))
 
 audiopath=fp[0]  #sets2["audiopath"]
 save_random=fp[1]   #sets2["audio_save_random"]
-nickname=fp[2]
-audiofiles=fp[3]
+audiofiles=fp[2]
 try:
-    DPKG= fp[4]
+    DPKG= fp[3]
 except:
     DPKG= False
 from webradioFS import file_list2

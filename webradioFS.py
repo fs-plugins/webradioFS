@@ -3,7 +3,7 @@
 # webradioFS von shadowrider
 ###############################################################################
 
-from . import _
+from . import pyvers1, _
 import codecs
 import Screens.Standby
 from Screens.Screen import Screen
@@ -18,7 +18,10 @@ try:
     menu_ok=True
 except:
     menu_ok=None
-from Screens.Volume import Volume
+try:
+    from Screens.VolumeControl import Volume
+except:
+    from Screens.Volume import Volume    
 from Screens.InfoBarGenerics import InfoBarSeek, NumberZap
 from Screens.InfoBarGenerics import InfoBarChannelSelection, InfoBarNotifications
 from Screens.ChannelSelection import service_types_radio
@@ -70,7 +73,15 @@ import threading, uuid
 import fnmatch
 from sqlite3 import dbapi2 as sqlite
 
-from ConfigParser import ConfigParser
+from twisted.internet.reactor import callInThread
+if pyvers1==3:
+    from configparser import ConfigParser#py3
+    from urllib.parse import quote,quote_plus,urlparse
+    from requests import get, exceptions  #get, 
+else:
+    from ConfigParser import ConfigParser
+    from urllib import quote,quote_plus
+    from urlparse import urlparse
 from skin import parseColor
 import os, re, shutil,types 
 import sys
@@ -83,21 +94,15 @@ import xml.etree.cElementTree
 from xml.etree.cElementTree import fromstring, ElementTree
 
 import socket 
-from urllib import quote,quote_plus 
-from twisted.web import client
-from twisted.web.client import downloadPage, HTTPClientFactory, getPage
-from twisted.internet import reactor
-from urlparse import urlparse
-from hashlib import md5
 
-from wbrfs_funct import read_settings1
-from ext import ext_l4l
+from .wbrfs_funct import read_settings1
+from .ext import ext_l4l
 l4l_set=ext_l4l()
 
 myname = "webradioFS"
-myversion = "21.07"
+myversion = "22.03"
 wbrfs_saver=None
-versiondat=(2024,10,18)
+versiondat=(2025,18,1)
 
 streamplayer=None
 manuell=0
@@ -166,6 +171,21 @@ if os.path.exists("/usr/lib/enigma2/python/Plugins/Extensions/sispmctl"):
 
 DPKG = False
 
+import requests
+def threadGetPage(url, success, fail, art):
+    try:
+        response = get(url)
+        response.raise_for_status()
+    except exceptions.RequestException as error:
+        fail(error)
+    else:
+        if art==2:
+            fh=open("/tmp/.wbrfs_pic","wb")
+            fh.write(response.content)
+            fh.close()
+            success("ok")
+        else:
+            success(str(response.content))
 
 def set_l4l():
   global L4LwbrFS
@@ -393,14 +413,14 @@ class stylemanager():
                              rs=open("/var/webradioFS_debug.log","a")
                              rs.write("parse-error(2) found in "+skin_path)
                              rs.close()
-                  if bcr_farb and dict_col.has_key(bcr_farb):
+                  if bcr_farb and bcr_farb in dict_col:#.has_key(bcr_farb):
                            skin_bcr= dict_col[bcr_farb]
-                  if lfr_farb and dict_col.has_key(lfr_farb):
+                  if lfr_farb and lfr_farb in dict_col:#.has_key(lfr_farb):
                           skin_lfr= dict_col[lfr_farb]  
 
 
-from wbrfsmenu import menu_13, groups_13
-from wbrfs_funct import wbrfs_message,StreamPlayer,Streamlist,load_rf,webradioFSdisplay13,wbrfs_filelist,webradioFSsetDisplay ,write_settings,read_einzeln,read_plan
+from .wbrfsmenu import menu_13, groups_13
+from .wbrfs_funct import wbrfs_message,StreamPlayer,Streamlist,load_rf,webradioFSdisplay13,wbrfs_filelist,webradioFSsetDisplay ,write_settings,read_einzeln,read_plan
 skin_ignore=read_einzeln().reading((("grund","skin_ignore"),))[0] 
 
 if fileExists("/etc/ConfFS/wbrfs_ignore_skin"):
@@ -927,7 +947,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
               if not x[3]['active']:
                         activ=False
               if activ and x[3]['datum']:
-                       if datetime.date.today() <> datetime.date.fromtimestamp(x[3]['datum']):
+                       if datetime.date.today() != datetime.date.fromtimestamp(x[3]['datum']):
                             activ=False
                             if datetime.date.today() > datetime.date.fromtimestamp(x[3]['datum']):
                                  d=read_plan().deling(x[3]['setid'])
@@ -1024,7 +1044,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
            self.planer_start()
            self.screensaver_off = 0
            self.ResetwbrScreenSaverTimer()
-           from plugin import make_autoT
+           from .plugin import make_autoT
            ppfs=make_autoT()
 
     def set_rec_text(self,txt=None,art=None):
@@ -2353,11 +2373,11 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
            self.set_rec_text(_("no recording is in progress or timer planned"),"default")	
            self.cache_list=None
 
-	   if answer==False:
+           if answer==False:
                self.menu_on=False
-	       self.display_art="normal"
-	       self.menu_back()
-	   self.rec_stop_a(True)
+           self.display_art="normal"
+           self.menu_back()
+           self.rec_stop_a(True)
 
     def rec_time(self):
        if self.cache_list==None:
@@ -2846,7 +2866,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                             typ1="file"
                             sender=""
                             tags=None
-                            from wbrfs_funct import tag_read
+                            from .wbrfs_funct import tag_read
                             tags= tag_read().read_tags(self.play_stream["url"],mcover)
                             if tags:
                               if tags[6]:
@@ -3332,7 +3352,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
       if not os.path.exists(myfav_file) or os.path.getsize(myfav_file)<200:
           if not self.new_imp:
                self.new_imp=1
-               from wbrfs_funct import fav_import
+               from .wbrfs_funct import fav_import
                zahl=fav_import().imp2()
                self.read_new()
       else:
@@ -3882,16 +3902,18 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
         self.display_art="normal"
         
         satradio=None
-        if self.configfile2[1] <> 3:
+        if self.configfile2[1] != 3:
             self.red="no"
         logo=""
         genr=""
+        errversuch=None
         type1=None
         self.anzeige_fav=self.fav_name
         self.fav_stream=self["streamlist"].getCurrent()[0]
         set_defekt=None
         self.stream_url=None
         self.display_timer.stop()
+        #f7=open("/tmp/001","a")
         if int(self["streamlist"].getCurrent()[0][4]) in (7,8):
             pass
         else:
@@ -3913,6 +3935,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                  self.play_stream={'sscr': 'default', 'genre2': 'webradio-brwoser', 'zuv': 'unbekannt', 'name': self["streamlist"].getCurrent()[0][0], 'url': self["streamlist"].getCurrent()[0][11], 'bitrate': self["streamlist"].getCurrent()[0][13], 'picon': 0, 'volume': 0, 'stream_id': 3, 'group1': 1, 'uploader': 'nn', 'descrip': '', 'genre': 'imports', 'rec': 0, 'typ': self["streamlist"].getCurrent()[0][12], 'defekt': 0,'cache':0}
             else:
                 self.play_stream=self.readSingleStreams(self["streamlist"].getCurrent()[0][2])
+                #f7.write(str(self.play_stream)+"\n")
 
             if self.play_stream:
                   genr= self.play_stream["genre"].strip()
@@ -3934,6 +3957,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                     else:
                        self.stream_urls= Streamlist().streams(self.play_stream["url"],type1,sets_exp["timeout"])
                        self.errorzaehler=0
+                       #f7.write(str(self.stream_urls)+"\n")
                        if self.configfile2[1]==0:
                            if self.stream_urls:
                              if self.stream_urls[1] and type1 != self.stream_urls[1] and (type1=="pls" or type1=="m3u"):
@@ -3943,7 +3967,8 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                 status=_("unknown error")
                 if not self.stream_urls or not len(self.stream_urls):
                         self.red="play_false"
-                        if self.upadate_taste: self.upadate_taste.setText(_("update"))
+                        #f7.write("not len\n")
+                        #if self.upadate_taste: self.upadate_taste.setText(_("update"))
                         self.stream_info=_("not url")
                         set_defekt=_("not url")
                         streamdef=1
@@ -4017,7 +4042,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                   if type1 != "pvr":
                       self.sets["bitrat_text"]=str(self.play_stream["bitrate"])+" kbit/s"
                       kb_zusatz=" kbit/s"
-                      s_url=base64.standard_b64encode(self.play_stream["url"])
+                      s_url=base64.standard_b64encode(self.play_stream["url"].encode())
                   genr= self.play_stream["genre"].strip()
                   if len(self.play_stream["genre2"].strip()):
                      genr=genr+", "+self.play_stream["genre2"].strip()
@@ -4615,7 +4640,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
 
     def fav_importb(self):
         if os.path.exists("/tmp/webradioFS.imp"):
-            from wbrfs_funct import fav_import3
+            from .wbrfs_funct import fav_import3
             zahl=fav_import3().imp2()
             if zahl:
                 self.session.open(MessageBox, _('Import successfully')+"\n"+_('Please restart webradioFS') , type=MessageBox.TYPE_INFO, timeout=15)
@@ -5102,7 +5127,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                 #dpkg=sets_prog["DPKG"]
                 filelist=file_list(art2,read_sub).Dateiliste                 
                 if len(filelist)>1:
-                    from wbrfs_screensaver import wbrfs_diashow
+                    from .wbrfs_screensaver import wbrfs_diashow
                     if not wbrfs_saver:
                         
                         wbrfs_saver=self.session.instantiateDialog(wbrfs_diashow,filelist,art,sets_scr,fontlist[4])
@@ -5403,7 +5428,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                 #if sets_exp["vol_auto_time"]>0: #sets_exp["ex_vol"]>0 and 
                     self.wbrScreenSaver_stop()
                     right_site.hide()
-                    from chset import wbrfs_set_we
+                    from .chset import wbrfs_set_we
                     self.session.openWithCallback(self.chill_back,wbrfs_set_we)
                 #else:
                 #    self.meld_screen(_("Please set first volume parameters in the basic settings"),"webradioFS- "+_("Info"),20)
@@ -5671,7 +5696,7 @@ class WebradioFSScreen_15(Screen, InfoBarSeek, HelpableScreen, InfoBarNotificati
                 try:
                     os.remove(self["streamlist"].getCurrent()[0][1])
                     self.ok(self.configfile2[5])
-                except OSError,e:
+                except OSError as e:
                         txt= 'error: \n%s' % e
                         self.meld_screen(txt ,"webradioFS- "+_("ERROR"),20,"ERROR")
 
@@ -6606,7 +6631,7 @@ class WebradioFSSetup_13(Screen, ConfigListScreen):
             sets_prog["hauptmenu"]=self.hauptmenu.value
             sets_prog["exttmenu"]=self.exttmenu.value
             sets_rec["path"]= self.rec_path.value
-            sets_grund={"picsearch":self.picsearch.value,"favpath":self.favpath.value,"exitfrage":self.exitfrage.value,"nickname":"",
+            sets_grund={"picsearch":self.picsearch.value,"favpath":self.favpath.value,"exitfrage":self.exitfrage.value,
             "stream_sort":self.stream_sort.value,"wbrbackuppath":self.wbrbackuppath.value,"startstream1":self.startstream_tmp.value,"skin_ignore":self.skin_ignore.value}
             sets_exp={"reconnect":self.reconnect.value,"versions_info":False,"timeout":self.timeout.value,"conwait":self.conwait.value,
                    "logopath":self.logopath.value,"coversafepath":self.coversafepath.value,"debug":self.debug.value,
@@ -6688,7 +6713,7 @@ class WebradioFSSetup_13(Screen, ConfigListScreen):
             if testcol:
                 self.session.openWithCallback(self.refresh, MessageBox, _("Sorry, color-Code is failed, settig default"), type = MessageBox.TYPE_INFO)
             else:
-                from wbrfscol import wbrfs_col_13
+                from .wbrfscol import wbrfs_col_13
                 self.session.openWithCallback(self.set_text_col,wbrfs_col_13,self.wbrSScolor.value,self.wbrSSbgcolor.value,self.infos)
         elif self.cur[1] == self.startstream_tmp:
                 self.startstream()
@@ -7192,7 +7217,7 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                             Title1 = currPlay.info().getInfoString(iServiceInformation.sTagTitle).replace("_"," ")#.strip()
                             sArtist = currPlay.info().getInfoString(iServiceInformation.sTagArtist)
                             tags=None
-                            from wbrfs_funct import tag_read
+                            from .wbrfs_funct import tag_read
                             tags= tag_read().read_tags(self.playlist[1][self.num-1][1])
                             r=0
                             if tags:
@@ -7263,12 +7288,12 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                                             url=None
                                             url=Codierung(self.t_name,self.streamname,typ)#.encode("latin","ignore")
                                             if url:
-                                               if sets_grund["picsearch"] !="var2":
                                                     user_agent = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3'
                                                     headers = { 'User-Agent' : user_agent }
-                                                    getPage(url, timeout=10, headers=headers).addCallback(self.GoogleImageCallback).addErrback(self.no_cover) 
-                                               else:
-                                                    sendUrlCommand(str(url), None,10).addCallback(self.GoogleImageCallback).addErrback(self.no_cover)
+                                                    if pyvers1==2:
+                                                        getPage(url, timeout=10, headers=headers).addCallback(self.GoogleImageCallback).addErrback(self.no_cover) 
+                                                    else:
+                                                        callInThread(threadGetPage, url, self.GoogleImageCallback, self.no_cover,1)
                                             else:                           
                                                self.no_cover()
                                       else:
@@ -7291,7 +7316,7 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                     if sets_grund["picsearch"]=="var1":
                          begr=('src="','</div>')
                     if sets_grund["picsearch"]=="var2":
-                         begr=("murl","md5")
+                         begr=("murl&quot;:&quot;","&amp;")
                     founds=1
                     laenge=len(result)
                     while founds and startPos < laenge and i<anz: 
@@ -7322,7 +7347,7 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                                 url1=''
                         else:
                                 url1 = url1.replace("&amp;","&").replace("%25","%")
-                                if url1 not in self.url_list:
+                                if url1 not in self.url_list and url1.startswith('http'):
                                     self.url_list.append(url1)
                                     i+=1
                         startPos=bfoundPos2+10
@@ -7332,7 +7357,7 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                         bfoundPos2 = result.find(', "',bfoundPos+1)
                         if bfoundPos != -1 and bfoundPos2 != -1:
                             url1 = result[bfoundPos+16:bfoundPos2-1]
-                            if url1 != '' and url1 not in self.url_list (url1.startswith('http://') or url1.startswith('https://')) and url.lower().endswith((".jpg",".jpeg")):
+                            if url1 != '' and url1 not in self.url_list and url1.startswith('http'):
                               self.url_list.append(url1)
             if len(self.url_list)>0:
                     self.cover_load()
@@ -7341,7 +7366,7 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                 self.no_cover()
 
     def cover_load(self,num=0):
-            if self.zeige_bilder or self.lcd_bilder and not fileExists("/tmp/mywbrfs_pic"):    
+            if (self.zeige_bilder or self.lcd_bilder) and not fileExists("/tmp/mywbrfs_pic"):    
                 if len(self.url_list)>0:
                     self.cover_ok=1
                     self.url_index=self.url_index + num
@@ -7350,7 +7375,8 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                     elif self.url_index < 0:
                        self.url_index=len(self.url_list)-1
                     url=self.url_list[self.url_index]
-                    downloadPage(url,"/tmp/.wbrfs_pic").addCallback(self.coverDownloadFinished).addErrback(self.coverDownloadFailed)
+                    response = requests.head(url)
+                    callInThread(threadGetPage, url, self.coverDownloadFinished, self.coverDownloadFailed,2)
                 else:
                     self.no_cover()
 
@@ -7660,8 +7686,8 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                     self["display_time"].move(ePoint(x,y))
         else:
                 if self.big_cover>1 and self.zeige_bilder and self.cover_ok>0: # and self.coverbig==2:
-                    x = random.randint(10, (DWide-self.groesse2-10))
-                    y = random.randint(30, (self.groesse2/2+120))
+                    x = random.randint(10, int(DWide-self.groesse2-10))
+                    y = random.randint(30, int(self.groesse2/2+120))
                     self.big_cover=0
                     self["display_time"].hide()
                     self["display_station"].hide()
@@ -7676,10 +7702,10 @@ class wbrScreenSaver_13(Screen, HelpableScreen, InfoBarNotifications):
                     self["display_station"].show()
                     self["display_nplaying"].show()
                     if not self.wbrSStextfix or self.wbrSStextfix=="False":
-                        y = random.randint(5, DHoehe-(self.groesse1+5))
-                        x = random.randint(5, DWide-(self.groesse1+self.textbreite))
+                        y = random.randint(5, int(DHoehe-(self.groesse1+5)))
+                        x = random.randint(5, int(DWide-(self.groesse1+self.textbreite)))
                         if self.zeige_bilder or self.saver_art=="Show_logo":
-                            x = random.randint(110, DWide-self.groesse1-self.textbreite)
+                            x = random.randint(110, int(DWide-self.groesse1-self.textbreite))
                             self["cover"].move(ePoint(x-10,y+5))
                         self["display_nplaying"].move(ePoint(x+self.groesse1+5,y+self.texthoehe*3))
                         self["display_station"].move(ePoint(x+self.groesse1+5,y+self.texthoehe*2))
@@ -8614,29 +8640,13 @@ def Codierung(text1="",sender="",typ=1):
         url=None
         if len(text3):
           if sets_grund["picsearch"]=="var1":
-            url = "https://www.google.com/search?q=%s&tbm=isch&client=firefox-b-d" % text3
+            url = "https://www.google.com/search?q=%s&tbm=isch&tbs=isz:l&client=firefox-b-d" % text3
           elif sets_grund["picsearch"]=="var2":
-            url = "https://www.bing.com/images/search?q=%s&FORM=HDRSC2" % text3
+            url = "https://www.bing.com/images/search?q=%s&FORM=HDRSC2&qft=+filterui:photo-photo+filterui:aspect-tall&form=IRFLTR" % text3
           elif sets_grund["picsearch"]=="var3":
             url = "https://itunes.apple.com/search?term=%s&limit=25" % (text3)
         if url: url=url.replace("%2B","+")
         return url 
-#########################################
-# mit freundlicher Genehmigung von joergm6 
-class myHTTPClientFactory(HTTPClientFactory):
-	def __init__(self, url, method='GET', postdata=None, headers=None,
-	agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.11 (KHTML, like Gecko) Ubuntu/11.04 Chromium/17.0.963.56 Chrome/17.0.963.56 Safari/535.11", timeout=20, cookies=None,
-	followRedirect=1, lastModified=None, etag=None):
-		HTTPClientFactory.__init__(self, url, method=method, postdata=postdata,
-		headers=headers, agent=agent, timeout=timeout, cookies=cookies,followRedirect=followRedirect)
-
-def sendUrlCommand(url, contextFactory=None, timeout=30, *args, **kwargs):
-    t1=urlparse(url)
-    scheme = t1[0]
-    host, port = t1[1], 80
-    factory = myHTTPClientFactory(str(url), *args, **kwargs)
-    reactor.connectTCP(host, port, factory, timeout=timeout)
-    return factory.deferred
 
 def grab_text(self,typ1=None,ersatz =""):
         if typ1:   
@@ -8670,26 +8680,32 @@ def grab(sender="",sTitle=None):
                 sTitle=sTitle.replace(":","").replace("-"," ").replace("("," ").replace(")"," ").split()
                 sTitle='+'.join(sTitle)
                 url=Codierung(sTitle,sender)#.encode("latin","ignore")
+                #f=open("/tmp/001","w")
+                #f.write(str(url)+"\n")
+                #f.close()
                 if url:  
-                        if sets_grund["picsearch"] !="var2":
                                 user_agent = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3'
                                 headers = { 'User-Agent' : user_agent }
-                                getPage(url, timeout=10, headers=headers).addCallback(grab2).addErrback(grab_err) 
-                        else:
-                                sendUrlCommand(str(url), None,10).addCallback(grab2).addErrback(grab_err)
+                                if pyvers1==2:
+                                     getPage(url, timeout=10, headers=headers).addCallback(grab2).addErrback(grab_err)  
+                                else:
+                                    callInThread(threadGetPage, url, grab2, grab_err,1)
 
-def grab2(result=None):
+
+def grab2(result):
           url1=None
           global pic_urls
           pic_urls=[]
           if result and len(result):
+            
              startPos=10 
              anz=0
              if sets_grund["picsearch"] !="var3":
                     if sets_grund["picsearch"]=="var1":
                          begr=('src="','</div>')
                     if sets_grund["picsearch"]=="var2":
-                         begr=("murl","md5")
+                         #begr=("murl","md5")
+                         begr=("murl&quot;:&quot;","&amp;")
                     while startPos<len(result) and anz<10: 
                         bfoundPos = result.find(begr[0],startPos)
                         if bfoundPos == -1:
@@ -8718,9 +8734,10 @@ def grab2(result=None):
                                 url1=''
                         else:
                              if not url1 in pic_urls:   
-                                url1 = url1.replace("&amp;","&").replace("%25","%")
-                                pic_urls.append(url1)
-                                anz+=1
+                                if url1.startswith('http'):
+                                    url1 = url1.replace("&amp;","&").replace("%25","%")
+                                    pic_urls.append(url1)
+                                    anz+=1
                         startPos=bfoundPos2+10
              elif sets_grund["picsearch"]=="var3": 
                 bfoundPos = result.find('artworkUrl100')
@@ -8739,7 +8756,11 @@ def pic_next():
          global pic_urls
          if len(pic_urls):    
              url3=pic_urls.pop(0)
-             downloadPage(url3,"/tmp/.wbrfs_pic").addCallback(pic_show).addErrback(pic_next_err)
+             callInThread(threadGetPage, url3, pic_show, grab_err,2)
+             #img_data = requests.get(url3).content
+             #with open("/tmp/.wbrfs_pic", 'wb') as f:
+             #    f.write(img_data)
+             #pic_show("ok")
          else:
              grab_err()
 
@@ -8751,7 +8772,7 @@ def pic_next_err(*args):
 
 def grab_err(result=None):
     global pic_urls
-    pic_urls=[]	
+    pic_urls=[]
     if write_debug>1: 
            if not result:
                d=debug("found pic failed")

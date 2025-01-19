@@ -15,8 +15,8 @@ from datetime import datetime, timedelta
 
 class wbrfs_set_we(ConfigListScreen,Screen):
     def __init__(self, session):
-	from webradioFS import fontlist
-	self.fontlist=fontlist
+        from webradioFS import fontlist
+        self.fontlist=fontlist
         tmpskin = open(fontlist[5]+"wbrfs_set_we.xml")
         self.skin = tmpskin.read()
         tmpskin.close()
@@ -27,32 +27,29 @@ class wbrfs_set_we(ConfigListScreen,Screen):
         self.alarm_volume = NoSave(ConfigInteger(default=self.akt_volume, limits=(5, 100)))
         self.sound_on=False
         self.list1 = []
-	self.list1.extend((
-			getConfigListEntry(_("alert time"), self.alarm_time),
-			getConfigListEntry(_("chill volume"), self.chill_volume),
-			))        
+        self.list1.extend((
+              getConfigListEntry(_("alert time"), self.alarm_time),
+              getConfigListEntry(_("chill volume"), self.chill_volume),
+              ))
         if self.akt_volume<100:
               self.list1.extend((
-			getConfigListEntry(_("max volume"), self.alarm_volume),
-			))              
+              getConfigListEntry(_("max volume"), self.alarm_volume),
+              ))
         Screen.__init__(self, session)
         if self.fontlist[9]:
-                    self.skinName = "wbrfs_set_we_e"
+              self.skinName = "wbrfs_set_we_e"
         else:
-                    self.skin=self.skin.replace('backgroundColor="#000000"','')
-                    self.skin=self.skin.replace('foregroundColor="#ffffff"','')
-		    self.skinName = "wbrfs_set_we"        
-        
+              self.skin=self.skin.replace('backgroundColor="#000000"','')
+              self.skin=self.skin.replace('foregroundColor="#ffffff"','')
+              self.skinName = "wbrfs_set_we"
         self.setTitle(_("chill-timer")+"   - webradioFS ")
-        
         ConfigListScreen.__init__(self, self.list1)
-	self["key_green"] = Label(_("Start"))
-	self["key_red"] = Label(_("Cancel"))
+        self["key_green"] = Label(_("Start"))
+        self["key_red"] = Label(_("Cancel"))
         txt= _("Set Time to wake up and volume for chilling")
         if self.akt_volume<100:
             txt="\n\n"+_("Warning: This function can changes the volume")
         self["warn"] = Label(txt)
-
 
         self["actions"] = ActionMap(["wbrfsKeyActions"],  #,"DirectionActions","MenuActions","InfobarChannelSelection"
             {
@@ -81,21 +78,22 @@ class wbrfs_set_we(ConfigListScreen,Screen):
                     eListboxPythonConfigContent.setItemHeight(self.fontlist[2])
                     stylemgr.setStyle(0, styleskinned)
           except:
-		pass
+             pass
 
 
     def ok(self):
-		lt = localtime()
-		jetzt=(3600*lt[3])+(60*lt[4])+lt[5]
-                meldezeit=3600*self.alarm_time.value[0]+60*self.alarm_time.value[1]
-		if meldezeit <=  jetzt:
-				minuszeit=jetzt-meldezeit
-				zeitdiff= 86400-minuszeit
-		else:
-				zeitdiff= meldezeit-jetzt
-                if zeitdiff<120:
-                   self.session.open(MessageBox,_("Period must be greater than 2 minutes"),MessageBox.TYPE_INFO)
-		else:
-                    self.close(zeitdiff,self.chill_volume.value,self.alarm_volume.value)
+        lt = localtime()
+        jetzt=(3600*lt[3])+(60*lt[4])+lt[5]
+        meldezeit=3600*self.alarm_time.value[0]+60*self.alarm_time.value[1]
+        if meldezeit <= jetzt:
+            minuszeit=jetzt-meldezeit
+            zeitdiff= 86400-minuszeit
+        else:
+            zeitdiff= meldezeit-jetzt
+            if zeitdiff<120:
+                self.session.open(MessageBox,_("Period must be greater than 2 minutes"),MessageBox.TYPE_INFO)
+            else:
+                self.close(zeitdiff,self.chill_volume.value,self.alarm_volume.value)
+
     def exit(self):
                 self.close(0,None,None)
