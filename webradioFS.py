@@ -82,6 +82,7 @@ else:
     from ConfigParser import ConfigParser
     from urllib import quote,quote_plus
     from urlparse import urlparse
+    from twisted.web.client import downloadPage, HTTPClientFactory, getPage
 from skin import parseColor
 import os, re, shutil,types 
 import sys
