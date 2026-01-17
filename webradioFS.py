@@ -74,13 +74,16 @@ import fnmatch
 from sqlite3 import dbapi2 as sqlite
 
 from twisted.internet.reactor import callInThread
+from requests import get
 if pyvers1==3:
     from configparser import ConfigParser#py3
     from urllib.parse import quote,quote_plus,urlparse
+    from urllib import error as u_err
     from requests import get, exceptions  #get, 
 else:
     from ConfigParser import ConfigParser
     from urllib import quote,quote_plus
+    import urllib2 as u_err
     from urlparse import urlparse
     from twisted.web.client import downloadPage, HTTPClientFactory, getPage
 from skin import parseColor
@@ -101,9 +104,9 @@ from .ext import ext_l4l
 l4l_set=ext_l4l()
 
 myname = "webradioFS"
-myversion = "22.03"
+myversion = "22.04"
 wbrfs_saver=None
-versiondat=(2025,18,1)
+versiondat=(2026,18,1)
 
 streamplayer=None
 manuell=0
@@ -176,8 +179,11 @@ import requests
 def threadGetPage(url, success, fail, art):
     try:
         response = get(url)
-        response.raise_for_status()
-    except exceptions.RequestException as error:
+        #response.raise_for_status()
+    except Exception as error:# exceptions.RequestException as error:
+        f=open("/tmp/err2","a")
+        f.write(str(error)+"\n")
+        f.close()
         fail(error)
     else:
         if art==2:
@@ -8755,9 +8761,15 @@ def grab2(result):
 
 def pic_next():
          global pic_urls
-         if len(pic_urls):    
+         if len(pic_urls):
+             #f=open("/tmp/wbrfspics","a")
+             #f.write("all: "+str(pic_urls)+"\n")    
              url3=pic_urls.pop(0)
              callInThread(threadGetPage, url3, pic_show, grab_err,2)
+             
+             #f.write(str(url3)+"\n")
+             #f.write(str(write_debug)+"\n")
+             #f.close()
              #img_data = requests.get(url3).content
              #with open("/tmp/.wbrfs_pic", 'wb') as f:
              #    f.write(img_data)
@@ -8784,6 +8796,9 @@ def grab_err(result=None):
 
 def pic_show(result=None,pic=None):
                 p=1
+                f=open("/tmp/wpic","w")
+                f.write(str(pic))
+                f.close()
                 if pic:
                         coverArtFile = file("/tmp/.wbrfs_pic", 'wb')
                         coverArtFile.write(pic)

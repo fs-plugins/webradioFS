@@ -41,7 +41,7 @@ else:
     from urlparse import urlparse
     from urllib import urlencode
 
-    from urllib2 import urlopen, Request, URLError
+    from urllib2 import urlopen, Request, URLError,HTTPError
     import httplib
 import uuid, random
 #from urlparse import urlparse
