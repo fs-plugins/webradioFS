@@ -104,7 +104,7 @@ from .ext import ext_l4l
 l4l_set=ext_l4l()
 
 myname = "webradioFS"
-myversion = "22.04"
+myversion = "22.05"
 wbrfs_saver=None
 versiondat=(2026,18,1)
 
@@ -179,11 +179,10 @@ import requests
 def threadGetPage(url, success, fail, art):
     try:
         response = get(url)
-        #response.raise_for_status()
+        response.raise_for_status()
     except Exception as error:# exceptions.RequestException as error:
-        f=open("/tmp/err2","a")
-        f.write(str(error)+"\n")
-        f.close()
+        if write_debug>1: 
+               d=debug("pic failed:"+error)
         fail(error)
     else:
         if art==2:
@@ -8762,18 +8761,8 @@ def grab2(result):
 def pic_next():
          global pic_urls
          if len(pic_urls):
-             #f=open("/tmp/wbrfspics","a")
-             #f.write("all: "+str(pic_urls)+"\n")    
              url3=pic_urls.pop(0)
              callInThread(threadGetPage, url3, pic_show, grab_err,2)
-             
-             #f.write(str(url3)+"\n")
-             #f.write(str(write_debug)+"\n")
-             #f.close()
-             #img_data = requests.get(url3).content
-             #with open("/tmp/.wbrfs_pic", 'wb') as f:
-             #    f.write(img_data)
-             #pic_show("ok")
          else:
              grab_err()
 
