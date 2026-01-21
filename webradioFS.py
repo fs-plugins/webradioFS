@@ -104,9 +104,9 @@ from .ext import ext_l4l
 l4l_set=ext_l4l()
 
 myname = "webradioFS"
-myversion = "22.05"
+myversion = "22.06"
 wbrfs_saver=None
-versiondat=(2026,18,1)
+versiondat=(2026,21,1)
 
 streamplayer=None
 manuell=0
@@ -224,7 +224,7 @@ def set_l4l():
 
 FBts_liste=[
   (0,_("Play")),(1,_("Exit")),(2,_("Exit")),(3,_("Stream-Tools")),(4,_("None")),
-  (5,_("Chillen")),(6,_("Sleeptimer")),(7,_("Favoriten")),(8,_("None")),(9,_("Edit/Info")),
+  (5,_("Chillen")),(6,_("Sleeptimer")),(7,_("Favoriten")),(8,_("None")),(9,_("Edit/Info")),(10,_("None")),
   (11,_("Played-Stream Info")),(12,_("Preview Favorit-File")),(13,_("Next Favorit-File")),(14,_("Stop Playing")),
   (15,_("Down")),(16,_("Up")),(17,_("Save Title-Info")),(18,_("Zap down")),(19,_("Zap up")),
   (20,_("TV or Video: prev")),(21,_("TV or Video: next")),(22,_("TV")),pcfs2,(24,_("Play my files")),(25,_("None"))] 
