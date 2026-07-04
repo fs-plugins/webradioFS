@@ -360,15 +360,15 @@ class Streamlist:
                 if len(streamliste) == 1:
                     streamliste = [streamliste[0], streamliste[0]]
                 return (streamliste, typ1, stream)
-            except HTTPError as err:
-                return (None, "st_l_a, "+str(err))
-            except URLError as err:
-                error = 'Error: '
-                if hasattr(err, 'code'):
-                    error += str(err.code)
-                if hasattr(err, 'reason'):
-                    error += str(err.reason)
-                return (None, "st_l_b, "+error)
+            #except HTTPError as err:
+            #    return (None, "st_l_a, "+str(err))
+            #except URLError as err:
+            #    error = 'Error: '
+            #    if hasattr(err, 'code'):
+            #        error += str(err.code)
+            #    if hasattr(err, 'reason'):
+            #        error += str(err.reason)
+            #    return (None, "st_l_b, "+error)
             except socket.timeout:
                 return (None, "st_l_c, "+'timeout')
             except Exception as e:
